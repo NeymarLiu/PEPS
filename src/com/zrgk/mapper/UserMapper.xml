@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zrgk.mapper.UserMapper">
+	<sql id="userrole">
+	u_id,u_loginname,u_password,u_sex,u_age,u_email,u_phone,u_intime,r_id,u_realname,u_selete,u_state	
+	</sql>
+	<sql id="userrole2">
+	u_id,u_loginname,u_password,u_sex,u_age,u_email,u_phone,u_intime,u_outtime,r_id,u_realname,u_selete,u_state	
+	</sql>
+	<resultMap type="userpojo" id="getAllUsersAndRole">
+		<id column="u_id" property="u_id" />
+		<result column="u_loginname" property="u_loginname"/>
+		<result column="u_realname" property="u_realname"/>
+		<result column="u_password" property="u_password"/>
+		<result column="u_sex" property="u_sex"/>
+		<result column="u_age" property="u_age"/>
+		<result column="u_email" property="u_email"/>
+		<result column="u_phone" property="u_phone"/>
+		<result column="u_intime" property="u_intime"/>
+		<result column="u_outtime" property="u_outtime"/>
+		<result column="u_selete" property="u_selete"/>
+		<result column="u_state" property="u_state"/>
+		<result column="u_logintime" property="u_logintime"/>
+		<association property="rolePojo" javaType="com.zrgk.pojo.RolePojo" >
+			<id column="r_id" property="r_id"/>
+			<result column="r_name" property="r_name"/>
+			<result column="r_createname" property="r_createname"/>
+			<result column="r_uptime" property="r_uptime"/>
+			<result column="r_createtime" property="r_createtime"/>
+			<result column="r_state" property="r_state"/>
+			<result column="r_number" property="r_number"/>
+		</association>
+		
+	</resultMap>
+	<select id="findAllUser" resultType="userpojo">
+		select * from user_tb where u_state != 2
+	</select>
+	<select id="getCount" resultType="int" parameterType="UserPageParams">
+		select count(*) from user_tb u JOIN role r ON u.r_id=r.r_id where u_state != 2 and r.r_id !=0
+		<if test="u_realname != null and u_realname !=''">
+			and u_realname like '%${u_realname}%'
+		</if>
+		<if test="u_state != null and u_state !='' and u_state !=-1">
+			and u_state =#{u_state}
+		</if>
+		order by u_id
+	</select>
+	
+	<select id="getAllUsers"  resultMap="getAllUsersAndRole" parameterType="UserPageParams">
+		select * from (
+		select u.*,r.r_name,rownum rn from user_tb u JOIN role r ON u.r_id=r.r_id where u_state != 2 and r.r_id !=0
+		<if test="u_realname != null and u_realname !=''">
+			and u_realname like '%${u_realname}%'
+		</if>
+		<if test="u_state != null and u_state !='' and u_state !=-1">
+			and u_state =#{u_state}
+		</if>
+		order by u_id
+		) t where t.rn between #{startNumber} and #{endNumber}
+		
+	</select>
+	<select id="getUserById" resultType="userpojo" parameterType="int">
+		select * from user_tb where u_id=#{uid}
+	</select>
+	<insert id="addOneUser" parameterType="userpojo">
+		<selectKey keyProperty="u_id" resultType="int" order="BEFORE">
+			select user_tbseq.nextval from dual
+		</selectKey>
+		
+		<if test="u_outtime != null">
+			insert into user_tb (<include refid="userrole2"></include>) 
+			values(#{u_id},#{u_loginname},#{u_password},
+			#{u_sex},#{u_age},#{u_email},#{u_phone},#{u_intime},#{u_outtime},
+			#{r_id},#{u_realname},0,#{u_state})
+		</if>
+		<if test="u_outtime == null">
+			insert into user_tb (<include refid="userrole"></include>)
+			values(#{u_id},#{u_loginname},#{u_password},
+			#{u_sex},#{u_age},#{u_email},#{u_phone},#{u_intime},
+			#{r_id},#{u_realname},0,#{u_state})
+		</if>
+	</insert>
+	<update id="updateUser" parameterType="userpojo">
+	<if test="u_outtime != null ">
+		update user_tb set u_loginname = #{u_loginname},u_password = #{u_password},
+		u_sex = #{u_sex},u_age = #{u_age},u_email = #{u_email},
+		u_phone = #{u_phone},u_intime = #{u_intime},
+		u_outtime = #{u_outtime},r_id = #{r_id},
+		u_realname = #{u_realname},u_state = #{u_state} where u_id=#{u_id}
+		</if>
+		<if test="u_outtime == null">
+		update user_tb set u_loginname = #{u_loginname},u_password = #{u_password},
+		u_sex = #{u_sex},u_age = #{u_age},u_email = #{u_email},
+		u_phone = #{u_phone},u_intime = #{u_intime},r_id = #{r_id},
+		u_realname = #{u_realname},u_state = #{u_state} where u_id=#{u_id}
+		</if>
+	</update>
+	<update id="deleteUser" parameterType="int">
+	 update user_tb set u_state=2 where u_id=#{id}
+	</update>
+	<update id="updateUserState" parameterType="userpojo">
+	update user_tb set u_state=#{u_state} where u_id = #{u_id}
+	</update>
+	<update id="updateUserTime" parameterType="int">
+		update user_tb set u_logintime = sysdate where u_id=#{uid}	
+	</update>
+</mapper>

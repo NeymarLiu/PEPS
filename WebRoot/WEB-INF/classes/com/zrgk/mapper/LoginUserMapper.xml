@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zrgk.mapper.LoginUserMapper">
+   <!-- 一对一映射关系 使用resultMap -->
+   <resultMap type="userPojo" id="userPojoAndRolePojo">
+	   <id column="u_id" property="u_id"/>
+	   <result column="u_loginname" property="u_loginname"/>
+	   <result column="u_password" property="u_password"/>
+	   <result column="u_sex" property="u_sex"/>
+	   <result column="u_age" property="u_age"/>
+	   <result column="u_email" property="u_email"/>
+	   <result column="u_phone" property="u_phone"/>
+	   <result column="u_inttime" property="u_intime"/>
+	   <result column="u_outtime" property="u_outtime"/>
+	   <result column="u_state" property="u_state"/>
+	   <result column="u_delete" property="u_delete"/>
+	   <result column="u_logintime" property="u_logintime"/>
+	   <result column="u_realname" property="u_realname"/>
+   <!-- 一对一关联 -->
+   <association property="rolePojo" javaType="com.zrgk.pojo.RolePojo" >
+   	 	 <id column="r_id" property="r_id"/>
+  		 <result column="r_name" property="r_name"/>
+   </association>
+   </resultMap>
+   	 	<select id="login" parameterType="userpojo" resultType="userPojo" resultMap="userPojoAndRolePojo">
+			select user_tb.*,role.r_name,role.r_id from user_tb inner join role on user_tb.r_id=role.r_id where u_LoginName = #{u_loginname} 
+			and u_password = #{u_password}
+		</select>
+</mapper>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zrgk.mapper.PoleMapper">
+	<!-- 做一对一的关系映射 -->
+	<resultMap type="PolePojo" id="PolePojoAndLinePojo">
+		<id column="pole_id" property="pole_id"/>
+		<result column="pole_code" property="pole_code"></result>
+		<result column="pole_state" property="pole_state"></result>
+		<result column="pole_time" property="pole_time"></result> 	
+		<association property="linePojo" javaType="LinePojo">
+				<id column="li_id" property="li_id"/>
+				<result column="li_name" property="li_name"></result> 
+		</association>
+	</resultMap>
+	<!-- 得到所有塔杆信息  ，分页加模糊-->
+	<select id="getAllPolePojo"   parameterType="FuzzyPoleParams" resultMap="PolePojoAndLinePojo">
+	select t1.* from (select t.*,rownum rn  from (select * from pole p join line l on p.li_id=l.li_id where pole_state!=2 
+		 <if test="line_name !='' and line_name !=null">
+					and li_name like '%${line_name}%'
+		</if>
+		order by p.pole_id
+		)t )t1
+		where t1.rn between #{startNumber} and #{endNumber}
+	</select>
+	<select id="getAllPolePojoCount"   parameterType="FuzzyPoleParams"  resultType="int">
+		select count(*) from pole p join line l on p.li_id=l.li_id where pole_state!=2 
+		 <if test="line_name !='' and line_name !=null">
+					and li_name like '%${line_name}%'
+		</if>
+	</select>
+	<!-- 得到线路信息 -->
+	<select id="getLineForPole"  parameterType="int" resultType="LinePojo">
+		select * from line where li_id=#{li_id}
+	</select>
+	<select id="getPolePojo" resultType="PolePojo" parameterType="int">
+		select * from pole join line on pole.li_id=line.li_id where pole_id=#{id}
+	</select>
+	<!-- 通过塔杆编码得到信息 -->
+	<select id="getPolePojoByPP" resultType="PolePojo" parameterType="PolePojo">
+		select * from pole where li_id=#{li_id} and pole_code=#{pole_code} and pole_state!=2
+		<if test="pole_id!=0 and pole_id!=null">
+			and pole_id!=#{pole_id}
+		</if>
+	</select>
+	<select id="getLineId" parameterType="string" resultType="string">
+		select li_id from line where li_code=#{li_code} and li_state!=2
+	</select>
+	<!-- update -->
+	<update id="updatePole" parameterType="polePojo">
+		update pole set pole_state=#{pole_state} where pole_id =#{pole_id}
+	</update>
+	<update id="updatePoleInfo">
+		update pole set pole_state=#{pole_state},pole_code=#{pole_code} 
+		<if test="pole_descript!='' and pole_descript!=null">
+			,pole_descript=#{pole_descript}
+		</if>
+		where pole_id =#{pole_id}
+	</update>
+	<!-- insert -->
+	 <insert id="addPole" parameterType="polePojo">
+		 <selectKey keyProperty="pole_id" resultType="int" order="BEFORE">
+		select pole_seq.nextval from dual
+		</selectKey>
+		<if test="pole_descript!=null">
+		insert into pole values(#{li_id},#{pole_id},#{pole_code},#{pole_state},#{pole_time},#{pole_descript})
+		</if>
+		<if test="pole_descript==null">
+		insert into pole(pole_id,pole_code,pole_state,pole_time,li_id) values(#{pole_id},#{pole_code},#{pole_state},#{pole_time},#{li_id})
+		</if>
+	</insert>
+</mapper>	

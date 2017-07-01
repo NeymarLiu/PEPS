@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zrgk.mapper.LogMapper">
+<resultMap type="logpojo" id="logAndUser">
+	<id column="log_id" property="log_id"/>
+	<result column="u_id" property="u_id"/>
+	<result column="log_time" property="log_time"/>
+	<result column="log_info" property="log_info"/>
+	<result column="log_state" property="log_state"/>
+	<association property="up" javaType="com.zrgk.pojo.UserPojo">
+		<id column="u_id" property="u_id"/>
+		<result column="u_realname" property="u_realname"/>
+	</association>
+</resultMap>
+
+	<select id="getCount" parameterType="LogPageParams" resultType="int">
+		select count(*) from org_log l ,user_tb u where u.u_id=l.u_id and l.u_id=#{uid}
+		<if test="qtime != null and qtime !=''">
+			and log_time >= to_date(#{qtime},'yyyy-MM-dd hh24:mi:ss') 
+		</if>
+		<if test="htime != null and htime !='' ">
+			and to_date(#{htime},'yyyy-MM-dd hh24:mi:ss') >= log_time
+		</if>
+		order by l.u_id	
+	</select>
+	<select id="getAllLogById" parameterType="LogPageParams" resultMap="logAndUser">
+		select * from (
+		select l.*,u_realname,rownum rn from org_log l ,user_tb u where u.u_id=l.u_id and l.u_id=#{uid}
+		<if test="qtime != null and qtime !=''">
+			and log_time >= to_date(#{qtime},'yyyy-MM-dd hh24:mi:ss') 
+		</if>
+		<if test="htime != null and htime !='' ">
+			and to_date(#{htime},'yyyy-MM-dd hh24:mi:ss') >= log_time
+		</if>
+		order by l.u_id	
+		) t where t.rn between #{startNumber} and #{endNumber}
+	</select>
+	<insert id="insertLog" parameterType="LogPojo">
+		<selectKey keyProperty="log_id" resultType="int" order="BEFORE">
+			select org_log_seq.nextval from dual
+		</selectKey>
+		insert into org_log values(#{log_id},#{u_id},sysdate,#{log_info},0)		
+	</insert>
+</mapper>
+
+
+
+

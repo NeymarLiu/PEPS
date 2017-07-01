@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+				
+	<mapper namespace="com.zrgk.mapper.LineMapper">
+	<!-- 定义sql片段 -->
+	<!-- Line表 -->
+	<sql id="line">
+		LI_ID,LI_CODE,LI_NAME,LI_BEGINPOLE,LI_ENDPOLE,LI_BACKLENGTH,LI_TOTIME,LI_PRESSLEVEL,LI_COUNT,LI_STATE,LI_RUN,LI_DESS
+	</sql>
+	<select id="getAllLine" resultType="com.zrgk.pojo.LinePojo" parameterType="Linecanshu">
+		select * from (
+		select li.*,rownum rn from line li where  li_state != 2
+		
+		<if test="li_name != null and li_name !=''">
+			and li_name like '%${li_name}%'
+		</if>
+		order by li_id
+		) t where t.rn between #{startNumber} and #{endNumber}
+		
+	</select>
+	<select id="getAlllineCount" parameterType="Linecanshu" resultType="int">
+		select count(*) from line  where li_state != 2
+		
+			<if test="li_name != null and li_name !=''">
+				and li_name like '%${li_name}%'
+			</if>
+			order by li_id
+		
+		
+			</select>
+	<select id="getLineById" parameterType="int" resultType="com.zrgk.pojo.LinePojo">
+		select * from line where li_id=#{id}
+	</select>
+	<insert id="addLine" parameterType="LinePojo">
+		<selectKey keyProperty="li_id" resultType="int" order="BEFORE">
+		select line_seq.nextval from dual
+		</selectKey>
+	insert into line(li_id,li_code,li_name,li_backlength,li_totime,li_presslevel,li_beginpole,li_endpole,li_count,li_state,li_dess) values(#{li_id},#{li_code},#{li_name},#{li_backlength},#{li_totime},#{li_presslevel},#{li_beginpole},#{li_endpole},#{li_count},#{li_state},#{li_dess})
+	</insert>
+	<update id="deleteLine" parameterType="int">
+		update  line set li_state = 2 where li_id=#{li_id}
+	</update>
+	<select id="getmaxLi_id" resultType="int">
+		select max(li_id) from line
+	</select>
+	<update id="updateLine" parameterType="LinePojo">
+	update line set li_code=#{li_code},li_name=#{li_name},li_backlength=#{li_backlength},li_totime=#{li_totime},li_presslevel=#{li_presslevel},li_beginpole=#{li_beginpole},li_endpole=#{li_endpole},li_count=#{li_count},li_state=#{li_state},li_dess=#{li_dess} where li_id=#{li_id}
+	</update>
+	<select id="findAllLine" resultType="com.zrgk.pojo.LinePojo">
+		select * from  line order by li_id
+	</select>
+	<update id="lineState" parameterType="LinePojo">
+	update line set li_state=#{li_state},li_run=#{li_run} where li_id=#{li_id}
+	</update>
+	
+	
+	<select id="selectlicode" parameterType="com.zrgk.pojo.LinePojo" resultType="int" >
+	     select count(*) from line where li_code =#{li_code} and li_state!=2
+			<if test="li_id!=null">
+				and li_id!=#{li_id}
+			</if>
+	</select>
+	<select id="selectlicode2"  parameterType="com.zrgk.pojo.LinePojo" resultType="int" >
+	    select * from line where li_code=#{li_code} and li_id != #{li_id} 
+	</select>
+</mapper>		

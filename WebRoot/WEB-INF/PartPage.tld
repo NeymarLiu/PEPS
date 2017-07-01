@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<taglib xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee "
+    version="2.1">
+    
+  <description>page</description>
+  <display-name>page</display-name>
+  <tlib-version>1.1</tlib-version>
+  <short-name>hospital</short-name>
+  <uri>http://testTag/lxc</uri>
+   
+  <tag>
+     <name>page</name>
+     <tag-class>com.zrgk.util.PartPage</tag-class>
+     <body-content>empty</body-content>
+     <attribute>
+        <name>nowPage</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+     </attribute>
+     <attribute>
+        <name>pageSize</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+     </attribute>
+     <attribute>
+        <name>count</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+     </attribute>
+      <attribute>
+        <name>totalPage</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+     </attribute>
+     <attribute>
+        <name>url</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+     </attribute>
+  </tag>
+  
+  
+</taglib>

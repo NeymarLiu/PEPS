@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+				<!-- mapper代理的实行  加载 sql语句的xml配置文件 
+			接口所在的  位置的全限定名
+		-->	
+	<mapper namespace="com.zrgk.mapper.EliminateDefectMapper">
+	<!-- 定义sql片段 -->
+	<!-- ED_task表 -->
+	<sql id="edtask">
+		E_ID,E_TASK_ID,E_NAME,E_SECURITY_ID,E_ISSUED_NAME,E_ISSUED_TIME,E_TASK_STATE,E_TASK_FINISH_TIME,E_TASK_CANCEL_STATE,E_TASK_DESCRIBED,E_REMARK,E_TASK_PRINCIPAL
+	</sql>
+	<sql id="edtask2">
+		E_ID,E_TASK_ID,E_NAME,E_SECURITY_ID,E_ISSUED_NAME,E_ISSUED_ID,E_ISSUED_TIME,E_TASK_STATE,E_TASK_CANCEL_STATE,E_TASK_DESCRIBED,E_REMARK,E_TASK_PRINCIPAL
+	</sql>
+	<sql id="edtask3">
+		e_task_finish_time,e_final_described
+	</sql>
+	<sql id="edtask4">
+		e_id,e_task_state,e_security_id,li_code,pole_code,pf_sure_grade,pf_flaw,f_name,pf_find_people,pf_find_time,e_issued_name,e_issued_time,pf_flaw_rate,pf_remark
+	</sql>
+	<sql id="edtask5">
+		e_id,e_task_state,E_NAME,E_SECURITY_ID,E_ISSUED_NAME,E_ISSUED_TIME,E_TASK_STATE,E_TASK_FINISH_TIME,E_TASK_CANCEL_STATE,E_TASK_DESCRIBED,E_REMARK,E_TASK_PRINCIPAL,u_id,u_realname
+	</sql>
+	<select id="getAllEliminateDefect" resultType="EliminateDefectPojo">
+		select <include refid="edtask"/> from ed_task where e_task_state!=0
+	</select>
+<!-- 消缺员任务查询 -->
+	<resultMap type="EliminateDefectPojo" id="EliminateDefectAndUser">
+		<id column="e_id" property="e_id"/>
+		<result column="e_task_id" property="e_task_id"/>
+		<result column="e_name" property="e_name"/>
+		<result column="e_security_id" property="e_security_id"/>
+		<result column="e_issued_name" property="e_issued_name"/>
+		<result column="e_issued_time" property="e_issued_time"/>
+		<result column="e_task_state" property="e_task_state"/>
+		<result column="e_task_finish_time" property="e_task_finish_time"/>
+		<result column="e_task_cancel_state" property="e_task_cancel_state"/>
+		<result column="e_task_described" property="e_task_described"/>
+		<result column="e_remark" property="e_remark"/>
+		<result column="e_task_principal" property="e_task_principals"/>
+		
+		<collection property="edupList" ofType="EliminateDefectUserPojo" 
+			select="getAllEliminateDefect2" column="e_id">
+		</collection>
+	</resultMap>
+	
+<!-- 任务分配员业务 -->
+<!-- 得到所有任务及模糊查询 -->	
+	<select id="getSomeEliminateDefect" parameterType="MoHuTask" resultType="EliminateDefectPojo">
+		select <include refid="edtask"/> from(select <include refid="edtask"/>,rownum rn from  (select <include refid="edtask"/> from ed_task where e_task_state!=0 and e_issued_id=#{id}
+		 	   <if test="stBid != null and stBid != ''">
+	            and   e_task_id like '%${stBid}%'
+	           </if>
+	           <if test="d2 != null">
+	             and  #{d2} >= E_ISSUED_TIME
+	           </if>
+	           <if test="d1 != null">
+	            and   E_ISSUED_TIME >= #{d1} 
+	           </if>
+	           <if test="stStatus != -1 and stStatus !=''">
+	             and  e_task_state=#{stStatus} 
+	           </if>
+	           <if test="stUser != null and stUser != ''">
+	             and  e_issued_name like '%${stUser}%'
+	           </if>
+	            order by e_id
+				))t where t.rn between #{startNumber} and #{endNumber}
+	</select>
+	<select id="getAllTaskCount" parameterType="MoHuTask" resultType="int">
+		select count(*) from ed_task where e_task_state!=0 and e_issued_id=#{id}
+		<if test="stBid != null and stBid != ''">
+	            and   e_task_id like '%${stBid}%'
+	           </if>
+	           <if test="d2 != null">
+	             and  #{d2} >= E_ISSUED_TIME
+	           </if>
+	           <if test="d1 != null">
+	            and   E_ISSUED_TIME >= #{d1} 
+	           </if>
+	           <if test="stStatus != -1 and stStatus !=''">
+	             and  e_task_state=#{stStatus} 
+	           </if>
+	           <if test="stUser != null and stUser != ''">
+	             and  e_issued_name like '%${stUser}%'
+	           </if>
+	</select>
+<!-- 得到最大任务的id -->
+	<select id="getMaxTaskId" resultType="string">
+		select max(e_id) from ed_task
+	</select>
+<!-- 得到所有任务负责人（线路管理员） -->	
+	<select id="getAllIssued" resultType="userpojo">
+		select u_id,u_realname from user_tb where r_id=2
+	</select>
+<!-- 得到所有消缺员 -->			
+	<select id="getEliminateDefectPeople" resultType="userpojo">
+		select u_id,u_realname from user_tb where r_id=4
+	</select>
+<!-- 得到所有缺陷 -->			
+	<select id="selectAllFlaw" resultType="EdTaskPojo">
+		select * from v_ed_patrol_select
+	</select>
+<!-- 根据id查负责人 -->
+	<select id="getRealnameById" parameterType="int" resultType="string">
+		select u_realname from user_tb where u_id=#{u_id}
+	</select>
+<!-- 插入任务 -->	
+	<insert id="addEdTask" parameterType="EliminateDefectPojo">
+		<if test="e_task_finish_time==null or e_task_finish_time==''">
+		insert into ED_TASK (<include refid="edtask2"></include>) values(ED_TASK_SEQ.nextval,#{e_task_id},#{e_name},#{e_security_id},#{e_issued_name},#{e_issued_id},#{e_issued_time},#{e_task_state},2,#{e_task_described},#{e_remark},#{e_task_principal})
+		</if>
+		<if test="e_task_finish_time !='' and e_task_finish_time!= null">
+		insert into ED_TASK  values(ED_TASK_SEQ.nextval,#{e_task_id},#{e_name},#{e_security_id},#{e_issued_name},#{e_issued_id},#{e_issued_time},#{e_task_state},#{e_task_finish_time},#{e_task_cancel_state},#{e_task_described},#{e_remark},#{e_task_principal})
+		</if>
+	</insert>
+<!-- 得到id -->	
+	<select id="getIdByTask" parameterType="EliminateDefectPojo" resultType="int">
+		select e_id from ED_TASK where E_TASK_ID=#{e_task_id}
+	</select>
+<!-- 插入消缺员和任务的中间表数据 -->
+	<insert id="addEdUser" parameterType="EliminateDefectUserPojo">
+		insert into ED_USER values(#{u_id},#{e_id})
+	</insert>	
+<!-- 插入任务和缺陷的中间表数据 -->	
+	<insert id="addEdTaskPatrol" parameterType="EdTaskPatrolFlowPojo">
+		insert into ED_TASK_PATROL_FLAW values(#{ETPF_E_ID},#{ETPF_PF_ID})
+	</insert>
+	
+<!-- 根据缺陷的id更改巡检任务的状态为1 -->
+	<update id="updatePfState" parameterType="EdTaskPatrolFlowPojo">
+		update PATROL_FLAW set E_SURE_STATE=1  where pf_id= #{ETPF_PF_ID}
+	</update>
+<!-- 更改任务状态 -->
+	<update id="updateEdState" parameterType="int">
+		update ed_task set e_task_state=2  where e_id=#{id} 
+	</update>
+<!-- 取消任务 -->	
+	<update id="deleteTask" parameterType="int">
+		update ed_task set e_task_cancel_state=1  
+	</update>
+<!-- 取消任务后释放与任务绑定的缺陷2为取消后状态 -->
+	<update id="freeTask" parameterType="int">
+		update PATROL_FLAW set E_SURE_STATE=2 where pf_id=(
+select ETPF_PF_ID from ED_TASK_PATROL_FLAW where ETPF_E_ID =#{e_id}
+)
+	</update>
+<!-- 所有任务 -->
+	<select id="selectTaskDetail" parameterType="int" resultType="EdTaskPojo">
+		select * from ED_TASK_DETIAL2 where e_id=#{id}
+	</select>
+<!-- 修改任务 -->	
+	<update id="updateEdTask" parameterType="EliminateDefectPojo">
+		update ED_TASK　set e_name=#{e_name},e_task_described=#{e_task_described},e_remark=#{e_remark} where e_id=#{e_id}
+	</update>
+<!-- ================消缺员业务========================================= -->
+
+<!-- 根据登录名id得到他所有任务 -->
+	<select id="getAllEliminateDefect2" parameterType="MoHuTask" resultType="EliminateDefectPojo">
+		select * from ed_user join user_tb on ed_user.u_id=user_tb.u_id  where  user_tb.u_id=#{user.u_id} 
+	</select>
+	<select id="getSomeEliminateDefectTwo" parameterType="MoHuTask" resultType="EliminateDefectPojo">
+		select tt.* from(select t.*,rownum rn  from (select  * from ed_task  where e_id in (select e_id from ed_user where u_id=#{user.u_id} )
+		 	   <if test="stBid != null and stBid != ''">
+	            and   ed_task.e_task_id like '%${stBid}%'
+	           </if>
+	           <if test="d2 != null">
+	             and  #{d2} >= ed_task.E_ISSUED_TIME
+	           </if>
+	           <if test="d1 != null">
+	            and   ed_task.E_ISSUED_TIME >= #{d1} 
+	           </if>
+	           <if test="e_security_id != -1 and e_security_id !=''">
+	             and  ed_task.e_security_id=#{e_security_id} 
+	           </if>
+	           <if test="stUser != null and stUser != ''">
+	             and  ed_task.e_issued_name like '%${stUser}%'
+	           </if>
+	            order by e_id
+				)t)tt where tt.rn between #{startNumber} and #{endNumber}
+	</select>
+<!-- 得到总任务条数 -->
+<select id="getAllTaskCount2" parameterType="MoHuTask" resultType="int">
+select count(*) from ed_user join user_tb on ed_user.u_id=user_tb.u_id  join ed_task on ed_task.e_id=ed_user.e_id where  user_tb.u_id=#{user.u_id} 
+		 	   <if test="stBid != null and stBid != ''">
+	            and   ed_task.e_task_id like '%${stBid}%'
+	           </if>
+	           <if test="d2 != null">
+	             and  #{d2} >= ed_task.E_ISSUED_TIME
+	           </if>
+	           <if test="d1 != null">
+	            and   ed_task.E_ISSUED_TIME >= #{d1} 
+	           </if>
+	           <if test="e_security_id != -1 and e_security_id !=''">
+	             and  ed_task.e_security_id=#{e_security_id} 
+	           </if>
+	           <if test="stUser != null and stUser != ''">
+	             and  ed_task.e_issued_name like '%${stUser}%'
+	           </if>
+	           
+	</select>
+<!-- 得到该任务下的所有消缺员 -->
+	<select id="lookOneTaskUser" parameterType="int" resultType="userpojo">
+		select user_tb.u_realname from ed_user join user_tb on 
+		ed_user.u_id=user_tb.u_id join ed_task on ed_task.e_id=ed_user.e_id
+ 		where  e_id=#{id}
+	</select>
+<!-- 该任务下的详情 -->
+	<select id="getAllValue" parameterType="int" resultType="EliminateDefectPojo">
+		select * from ed_task where e_id=#{id}
+	</select>
+<update id="updateEdStateTwo" parameterType="EliminateDefectPojo">
+		update ED_TASK　set e_task_state = 3 where e_id=#{id}
+	</update>
+<!-- 回执 -->
+	<update id="addUpdateReceipt" parameterType="EliminateDefectPojo">
+		update ed_task set e_final_described=#{e_final_described},e_task_finish_time=#{e_task_finish_time}  where e_id=#{e_id}
+	</update>
+	<update id="updateEdStateThree" parameterType="EliminateDefectPojo">
+		update ED_TASK　set e_task_state = 4 where e_id=#{e_id}
+	</update>	
+<!-- 模糊查询所有的任务 -->
+	<select id="getAllTaskCount3" parameterType="MoHuTask" resultType="int">
+	select count(*) from (select * from ed_task_detial e where 1=1
+		 	   <if test="stBid != null and stBid != ''">
+	            and   e.e_task_id like '%${stBid}%'
+	           </if>
+	           <if test="d2 != null">
+	             and  #{d2} >= e.E_ISSUED_TIME
+	           </if>
+	           <if test="d1 != null">
+	            and   e.E_ISSUED_TIME >= #{d1} 
+	           </if>
+	           <if test="e_security_id != -1 and e_security_id !=''">
+	             and  e.e_security_id=#{e_security_id} 
+	           </if>
+	           <if test="stUser != null and stUser != ''">
+	             and  e.e_issued_name like '%${stUser}%'
+	           </if>
+	           <if test="f_id != null and f_id !=''">
+	             and  e.f_id=#{f_id}
+	           </if>
+	           )
+	</select>
+	<select id="getSomeEliminateDefect3" parameterType="MoHuTask" resultType="EdTaskPojo">
+		
+		select tt.* from(select t.*,rownum rn  from (select * from ed_task_detial e where 1=1
+		<if test="stBid != null and stBid != ''">
+	            and   e.e_task_id like '%${stBid}%'
+	           </if>
+	           <if test="d2 != null">
+	             and  #{d2} >= e.E_ISSUED_TIME
+	           </if>
+	           <if test="d1 != null">
+	            and   e.E_ISSUED_TIME >= #{d1} 
+	           </if>
+	           <if test="e_security_id != -1 and e_security_id !=''">
+	             and  e.e_security_id=#{e_security_id} 
+	           </if>
+	           <if test="stUser != null and stUser != ''">
+	             and  e.e_issued_name like '%${stUser}%'
+	           </if>
+	           <if test="f_id != null and f_id !='' and f_id !=0">
+	             and  e.f_id=#{f_id}
+	           </if>
+	            order by e.e_id
+				)t)tt where tt.rn between #{startNumber} and #{endNumber}
+	</select>
+<!-- 查询所有的缺陷 -->
+	<select id="selectAllFlaw2" resultType="FlawPojo">
+		select f_id,f_name from flaw 
+	</select>
+</mapper>		

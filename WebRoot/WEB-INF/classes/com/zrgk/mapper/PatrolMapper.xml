@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		
+<mapper namespace="com.zrgk.mapper.PatrolMapper">
+	<!-- 引入ehcache -->
+	<!-- <cache type="org.mybatis.caches.ehcache.EhcacheCache"/> -->
+	<!-- 定义sql片段 -->
+	<!-- patroltask表 -->
+	<sql id="patrolTask">
+		p_id,p_num,p_name,p_lid,p_strnum,p_endnum,p_issued_name,p_issued_time,p_state,p_remark,p_finish_time
+	,p_start_time
+	</sql>
+	<sql id="patrolTask2">
+		p_id,p_num,p_name,p_lid,p_strnum,p_endnum,p_issued_name,p_issued_time,p_state,p_issued_id,p_remark
+	</sql>
+	<sql id="patrolTask3">
+		p_id,p_num,p_name,p_lid,p_strnum,p_endnum,p_issued_name,p_issued_time,p_state,p_issued_id
+	</sql>
+	
+	<!-- 定义返回数据模型 -->
+	<resultMap type="patroltaskpojo" id="patroltask">
+		<id column="p_id" property="p_id"/>
+		<result column="p_num" property="p_num"/>
+		<result column="p_name" property="p_name"/>
+		<result column="p_issued_name" property="p_issued_name"/>
+		<result column="p_issued_time" property="p_issued_time"/>
+		<result column="p_state" property="p_state"/>
+		<result column="p_remark" property="p_remark"/>
+		<result column="p_lid" property="p_lid"/>
+		<result column="p_finish_time" property="p_finish_time"/>
+		<association property="strPojo" javaType="polepojo" 
+			select="getPoleForPatrol" column="p_strnum">
+		</association>
+		<association property="endPojo" javaType="polepojo" 
+			select="getPoleForPatrol" column="p_endnum">
+		</association>
+		<association property="line" javaType="linepojo" 
+			select="getLineForPatrol" column="p_lid">
+		</association>
+		<collection property="pupList" ofType="PatrolUserPojo"
+				select="getTaskUP" column="p_id">
+		</collection>
+		<collection property="pfpList" ofType="PatrolFlawPojo"
+				select="getTaskFP" column="p_id">
+		</collection>
+	</resultMap>
+	
+	
+	<resultMap type="PatrolFlawPojo" id="PFP">
+		<id column="pf_id" property="pf_id"/>
+		<result column="pf_pole" property="pf_pole"/>
+		<result column="pf_flaw" property="pf_flaw"/>
+		<result column="pf_flaw_grade" property="pf_flaw_grade"/>
+		<result column="pf_flaw_rate" property="pf_flaw_rate"/>
+		<result column="pf_find_time" property="pf_find_time"/>
+		<result column="pf_find_people" property="pf_find_people"/>
+		<result column="pf_remark" property="pf_remark"/>
+		<result column="pf_state" property="pf_state"/>
+		<association property="ptp" javaType="patroltaskpojo" 
+			select="getPTasks" column="p_lid">
+			<association property="ptp.line" javaType="linepojo" 
+				select="getLineForPatrol" column="p_lid">
+			</association>
+		</association>
+		<association property="polePojo" javaType="PolePojo"
+			select="getPoleForPatrol" column="pf_pole">
+		</association>
+	</resultMap>
+	<!-- 查询语句 -->
+	<select id="getAllCompletePatrol" parameterType="FuzzyPartPTaskParams" resultType="PatrolQueryPojo">
+		select * from(select t1.*,rownum rn from(select * from V_PATROL_SELECT
+		  <where >
+	        <choose>
+	           <when  test="p_num !='' and p_num !=null">
+					and p_num like '%${p_num}%'
+	           </when>
+	           <when test="p_state !=-1 and p_state !=null">
+	              and  pf_flaw= #{p_state}
+	           </when>
+	        </choose>
+        </where>
+         order by p_num
+		)t1)t where t.rn between #{startNumber} and #{endNumber}
+	</select>
+	<select id="getCompletePatrolCount" parameterType="FuzzyPartPTaskParams" resultType="int">
+		select count(*) from V_PATROL_SELECT
+		  <where >
+	        <choose>
+	           <when  test="p_num !='' and p_num !=null">
+					and p_num like '%${p_num}%'
+	           </when>
+	           <when test="p_state !=-1 and p_state !=null">
+	              and  pf_flaw= #{p_state}
+	           </when>
+	        </choose>
+        </where>
+	</select>
+	
+	
+	<select id="getPTasks" parameterType="int" resultType="patroltaskpojo">
+		select * from patrol_task where p_id=#{p_id}
+	</select>
+	<select id="getTaskPName" parameterType="int" resultType="PolePojo">
+		select * from pole where pole_id=#{pf_pole}
+	</select>
+	<select id="getTaskFP" parameterType="int" resultType="PatrolFlawPojo">
+		select pf.*,p.pole_code from patrol_flaw pf join pole p on pf.pf_pole=p.pole_id where p_id=#{p_id}
+	</select>
+	<select id="getTaskUP"  parameterType="int" resultType="PatrolUserPojo">
+		select u_realname from patrol_user p join user_tb u on p.u_id=u.u_id where p_id=#{p_id}
+	</select>
+	<select id="getTaskUserMap"  parameterType="int" resultType="UserPojo">
+		select * from user_tb where u_id=#{u_id}
+	</select>
+	<select id="getPoleForPatrol" parameterType="int" resultType="polepojo">
+		select pole_id,pole_code from pole where pole_id=#{pole_id}
+	</select>
+	<select id="getLineForPatrol" parameterType="int" resultType="linepojo">
+		select li_code,li_name from line where li_id=#{li_id}
+	</select>
+	<select id="getAllPatrolTask" parameterType="FuzzyPartPTaskParams" resultMap="patroltask">
+	select <include refid="patrolTask"/> from(select <include refid="patrolTask"/>,rownum rn from(select <include refid="patrolTask"/>  from patrol_task where p_state between 1 and 4  and p_issued_id=#{u_id}
+		<if test="p_num !='' and p_num !=null">
+			and p_num like '%${p_num}%'
+		</if>
+		<if test="p_state !=-1 and p_state !=null">
+			and p_state=#{p_state}
+		</if>
+		 order by p_id
+		))t where t.rn between #{startNumber} and #{endNumber}
+	</select>
+	<select id="getAllPTask" parameterType="FuzzyPartPTaskParams" resultMap="patroltask">
+	select <include refid="patrolTask"/> from (select <include refid="patrolTask"/>,rownum rn  from(select <include refid="patrolTask"/> from v_ptpu v where v.u_id=#{u_id} and p_state >1 
+		<if test="p_num !='' and p_num !=null">
+			and p_num like '%${p_num}%'
+		</if>
+		<if test="p_state !=-1 and p_state !=null">
+			and p_state=#{p_state}
+		</if>
+		 order by p_id
+		))t where t.rn between #{startNumber} and #{endNumber}
+	</select>
+	<select id="getAllPatrolTaskCount" parameterType="FuzzyPartPTaskParams" resultType="int">
+		select count(*) from patrol_task where p_state between 1 and 4 and p_issued_id=#{u_id}
+		<if test="p_num !='' and p_num !=null">
+			and p_num like '%${p_num}%'
+		</if>
+		<if test="p_state !=-1 and p_state !=null">
+			and p_state=#{p_state}
+		</if>
+	</select>
+	<select id="getAllPTaskCount" parameterType="FuzzyPartPTaskParams" resultType="int">
+		select count(*) from v_ptpu v where v.u_id=#{u_id} and p_state >1 
+		<if test="p_num !='' and p_num !=null">
+			and p_num like '%${p_num}%'
+		</if>
+		<if test="p_state !=-1 and p_state !=null">
+			and p_state=#{p_state}
+		</if>
+	</select>
+	<select id="getOnePatrolTask" parameterType="int" resultMap="patroltask">
+		select <include refid="patrolTask"/> from patrol_task where p_state!=0 and p_id=#{p_id}
+	</select>
+	<select id="getPatrolPeople" resultType="userpojo">
+		select u_id,u_realname from user_tb  where r_id=3	and u_state=0
+	</select>
+	<select id="getAllLine" resultType="linepojo">
+		select li_id,li_code,li_name,li_beginpole,li_endpole from line where li_state=0
+	</select>
+	<select id="getPojoByLine" parameterType="int" resultType="polepojo">
+		select * from pole where li_id=#{li_id} and pole_state=0 order by pole_code
+	</select>
+	<select id="getMaxTaskID" resultType="string">
+		select max(p_id) from patrol_task 
+	</select>
+	<select id="getPidByPcode" parameterType="string" resultType="int">
+		select p_id from patrol_task where p_num=#{p_num}
+	</select>
+	<select id="getTaskPole" parameterType="patroltaskpojo" resultType="polepojo">
+		select  * from pole where li_id=#{p_lid} and pole_code between (select pole_code from pole where pole_id=#{p_strnum}) and (select pole_code from pole where pole_id=#{p_endnum}) 
+	</select>
+	<select id="getPtaskUser" parameterType="int" resultType="PatrolUserPojo">
+		select * from patrol_user where p_id=#{p_id}
+	</select>
+	<select id="getPFlaw" resultType="flawpojo">
+		select * from flaw where f_state=0
+	</select>
+	<select id="getOnePFP" parameterType="int" resultType="PatrolFlawPojo">
+		select * from patrol_flaw pf join pole on pole_id=pf.pf_pole join flaw f on pf.pf_flaw=f.f_id where pf_id=#{pf_id}
+	</select>
+	<select id="getOnePFP2" parameterType="int" resultType="PatrolFlawPojo">
+		select * from patrol_flaw pf join pole on pole_id=pf.pf_pole  where pf_id=#{pf_id}
+	</select>
+	<select id="uploadPTask" parameterType="int" resultType="int"> 
+		select count(*) from patrol_flaw where pf_state is null and p_id=#{p_id}
+	</select>
+	<select id="exportPatrolExcel" resultType="PatrolQueryPojo">
+		select * from V_PATROL_SELECT
+		<!-- <foreach collection="idList" item="pfid" open="select * from V_PATROL_SELECT where pf_id IN (" close=")" separator=",">
+					#{pfid}
+		</foreach> -->
+	</select>
+	<select id="getPatrolInformationCount" parameterType="InformationStatisticsParams" resultType="int">
+		select count(*) from V_PATROL_SELECT
+		<where >
+	        <choose>
+	           <when  test="p_num !='' and p_num !=null">
+					and p_num like '%${p_num}%'
+	           </when>
+	           <when test="start_time !=null">
+	              and  pf_find_time>= #{start_time}
+	           </when>
+	           <when test="end_time !=null">
+	              and   #{end_time}>=pf_find_time
+	           </when>
+	        </choose>
+        </where>
+	</select>
+	<select id="getPatrolInformation" parameterType="InformationStatisticsParams" resultType="PatrolQueryPojo">
+		select * from( select t1.*,rownum rn from (select * from V_PATROL_SELECT
+			<where >
+		        <choose>
+		           <when  test="p_num !='' and p_num !=null">
+						and p_num like '%${p_num}%'
+		           </when>
+		           <when test="start_time !=null">
+		              and  p_start_time>= #{start_time}
+		           </when>
+		           <when test="end_time !=null">
+		              and   #{end_time}>=p_start_time
+		           </when>
+		           <otherwise>
+		           	and 1=1
+		           </otherwise>
+		        </choose>
+		        )t1)t where t.rn between #{startNumber} and #{endNumber}
+	        </where>
+	</select>
+	<!-- 添加语句 -->
+	<insert id="addPatrolTask" parameterType="PatrolTaskPojo">
+		<selectKey keyProperty="p_id" resultType="int" order="BEFORE">
+		select patrol_task_seq.nextval from dual
+		</selectKey>
+		<if test="p_remark !=null and p_remark !=''">
+		insert into patrol_task (<include refid="patrolTask2"></include>)
+		values(#{p_id},#{p_num},#{p_name},#{p_lid},#{p_strnum},#{p_endnum},#{p_issued_name},#{p_issued_time},#{p_state},#{p_issued_id},#{p_remark})
+		</if>
+		<if test="p_remark ==null or p_remark ==''">
+		insert into patrol_task (<include refid="patrolTask3"></include>)
+		values(#{p_id},#{p_num},#{p_name},#{p_lid},#{p_strnum},#{p_endnum},#{p_issued_name},#{p_issued_time},#{p_state},#{p_issued_id})
+		</if>	
+	</insert>
+	<insert id="addTaskUser" parameterType="PatrolUserPojo" >
+		insert into patrol_user values(#{p_id},#{u_id},0)
+	</insert>
+	<insert id="addTaskPole" parameterType="PatrolFlawPojo">
+		<selectKey keyProperty="pf_id" resultType="int" order="BEFORE">
+		select patrol_flaw_seq.nextval from dual
+		</selectKey>
+		insert into patrol_flaw (pf_id,p_id,pf_pole) values(#{pf_id},#{p_id},#{pf_pole})
+	</insert>
+	
+	
+	
+	<!-- 更改语句 -->
+	<update id="cancleTask" parameterType="int">
+		update patrol_task set p_state=0 where p_id=#{p_id}
+	</update>
+	<update id="updatePStartTime" parameterType="PatrolTaskPojo">
+		update patrol_task set p_start_time=#{p_start_time} where p_id=#{p_id}
+	</update>
+	<update id="updatePaskState" parameterType="PatrolTaskPojo">
+		update patrol_task set p_state=#{p_state} where p_id=#{p_id}
+	</update>
+	<update id="updatePTask" parameterType="PatrolTaskPojo">
+		<if test="p_remark !=null and p_remark !=''">
+		update patrol_task set p_state=#{p_state},p_name=#{p_name},p_strnum=#{p_strnum}
+		,p_endnum=#{p_endnum},p_lid=#{p_lid},p_remark=#{p_remark} where p_id=#{p_id}
+		</if>
+		<if test="p_remark ==null or p_remark ==''">
+		update patrol_task set p_state=#{p_state},p_name=#{p_name},p_strnum=#{p_strnum}
+		,p_endnum=#{p_endnum},p_lid=#{p_lid} where p_id=#{p_id}
+		</if>
+	</update>
+	<update id="updatePoleFlaw" parameterType="PatrolFlawPojo">
+		update patrol_flaw set pf_flaw=#{pf_flaw},pf_flaw_grade=#{pf_flaw_grade},pf_flaw_rate=#{pf_flaw_rate}
+		,pf_find_time=#{pf_find_time},pf_find_people=#{pf_find_people},pf_state=0
+		<if test="pf_remark!=null and pf_remark!=''">
+			,pf_remark=#{pf_remark}
+		</if>
+		
+		 where pf_id=#{pf_id}
+	</update>
+	<update id="updatePFinishTime" parameterType="PatrolTaskPojo">
+		update patrol_task set p_finish_time=#{p_finish_time} where p_id=#{p_id}
+	</update>
+	
+	<!-- 删除语句 -->
+	<delete id="deletePTaskUser" parameterType="int">
+		delete from patrol_user where p_id=#{p_id}
+	</delete>
+	<delete id="deletePTaskFlaw" parameterType="int">
+		delete from patrol_flaw where p_id=#{p_id}
+	</delete>
+	
+</mapper>

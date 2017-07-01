@@ -1,0 +1,17 @@
+用户名为Peps 密码为oracle  网络服务名orcl
+
+
+导出指定的表
+exp peps/oracle@orcl file=D:\PEPS.dmp tables=(ed_task,ed_task_patrol_flaw,flaw,line,menu,org_log,patrol_task,patrol_flaw,patrol_user,pole,role,role_menu,user_tb,ed_user)
+
+
+
+导入数据库
+
+imp peps/oracle@orcl file=D:\PEPS.dmp full=y
+
+
+
+导出某个用户下的所有表 视图 存储过程
+
+exp peps/oracle@orcl owner=(peps) file=e:\PEPS.dmp

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zrgk.mapper.MyWorkMapper">
+<!-- 定义sql片段 -->
+	<!-- patroltask表 -->
+	<sql id="patrolTask">
+		u_id;u_loginname;u_password;u_sex;u_age;u_email;u_phone;u_intime;u_outtime;u_state;u_delete;u_logintime;r_id;u_realname;rolePojo;
+	</sql>
+	<!-- 通过id查询用户信息 -->
+	<select id="selectMyUser" parameterType="int" resultType="userpojo"> 
+	  select * from user_tb where u_id=#{u_id}
+	</select>
+	<!-- 修改 -->
+ <update id="updateMyUser" parameterType="userpojo"  >
+     <if test="u_outtime != null">
+	 update user_tb set u_loginname=#{u_loginname},u_realname=#{u_realname}
+	 <if test="u_repassword !=null and u_repassword != ''">
+	 ,u_password=#{u_repassword}
+	 </if>
+	 ,u_sex=#{u_sex},
+      u_age=#{u_age},u_intime=#{u_intime},u_outtime=#{u_outtime},u_phone=#{u_phone},u_email=#{u_email} where u_id=#{u_id}     
+     </if>
+     <if test="u_outtime == null">
+	 update user_tb set u_loginname=#{u_loginname},u_realname=#{u_realname}
+	  <if test="u_repassword !=null and u_repassword != ''">
+	 ,u_password=#{u_repassword}
+	 </if>
+	 ,u_sex=#{u_sex},
+      u_age=#{u_age},u_intime=#{u_intime},u_phone=#{u_phone},u_email=#{u_email} where u_id=#{u_id}     
+     </if>
+</update>
+
+<!-- //代办列表巡检任务查看 -->
+  <select id="AllXjTask" parameterType="FuzzyMyworkParams" resultType="myTaskPojo">
+	select * from (select t1.*,rownum rn from (
+			select * from v_db_task where 1=1 and p_issued_id=#{u_id}
+		<if test="p_name!='' and p_name!=null">
+			and p_name like '%${p_name}%'
+		</if>
+		<if test="state!=null">
+		<foreach collection="state" item="s" open="and p_state IN (" close=")" separator=",">
+					#{s}
+		</foreach>
+		</if>
+		)t1)t 
+  </select>
+
+  <select id="AllXjPTask" parameterType="FuzzyMyworkParams" resultType="myTaskPojo">
+	select * from (select t1.*,rownum rn from (
+			select * from v_db_ptask where 1=1 and u_id=#{u_id}
+		<if test="p_name!='' and p_name!=null">
+			and p_name like '%${p_name}%'
+		</if>
+		<if test="state!=null">
+		<foreach collection="state" item="s" open="and p_state IN (" close=")" separator=",">
+					#{s}
+		</foreach>
+		</if>
+		)t1)t 
+  </select>
+  <select id="AllXjTaskCount" parameterType="FuzzyPartPTaskParams" resultType="int">
+		select count(*) from v_db_task where 1=1 and p_issued_id=#{u_id}
+		<if test="p_name!='' and p_name!=null">
+			 and p_name like '%${p_name}%'
+		</if>
+		<if test="state!=null">
+		<foreach collection="state" item="s" open="and p_state IN (" close=")" separator=",">
+					#{s}
+		</foreach>
+		</if>
+  </select>
+  <select id="AllXjPTaskCount" parameterType="FuzzyPartPTaskParams" resultType="int">
+		select count(*) from v_db_ptask where 1=1 and u_id=#{u_id}
+		<if test="p_name!='' and p_name!=null">
+			 and p_name like '%${p_name}%'
+		</if>
+		<if test="state!=null">
+		<foreach collection="state" item="s" open="and p_state IN (" close=")" separator=",">
+					#{s}
+		</foreach>
+		</if>
+  </select>
+  <!-- 通过id代办列表巡检任务查看 -->
+  <select id="AllXjTaskId" parameterType="int" resultType="myTaskPojo">
+		select * from v_db_task where p_id=#{p_id}
+		
+  </select>
+  <!-- ajax验证登陆用户唯一 -->
+  <select id="checkLoginName" parameterType="userPojo" resultType="int">
+  	select count(*) from user_tb where u_loginname=#{u_loginname} and u_id!=#{u_id}
+  </select>
+  
+  <select id="getEDTask" parameterType="FuzzyMyworkParams" resultType="MyTaskPojo">
+  select  p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,t2.ron p_id from
+ (select p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,rownum rn,t1.ron from (
+  select distinct p_num ,t.p_remark,t.p_name,t.p_issued_name,t.p_issued_time,t.p_state,
+    t.u_id,t.li_name,t.p_strcode,t.p_endcode,rownum ron
+ 	from v_ED_TASK t where u_id=#{u_id} and t.p_state in (2,3)
+ 	<if test="p_name!='' and p_name!=null">
+			and p_name like '%${p_name}%'
+		</if>
+ 	)t1)t2
+  </select>
+  <select id="getEDETask" parameterType="FuzzyMyworkParams" resultType="MyTaskPojo">
+  select  p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,t2.ron p_id from
+ (select p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,rownum rn,t1.ron from (
+  select distinct p_num ,t.p_remark,t.p_name,t.p_issued_name,t.p_issued_time,t.p_state,
+    t.u_id,t.li_name,t.p_strcode,t.p_endcode,rownum ron
+ 	from v_ed_etask t where u_id=#{u_id}
+ 		<if test="p_name!='' and p_name!=null">
+			and p_name like '%${p_name}%'
+		</if>
+ 	
+ 	)t1)t2
+  </select>
+  <select id="getOneEDETask" parameterType="FuzzyMyworkParams" resultType="MyTaskPojo">
+  select  p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,t2.ron p_id from
+ (select p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,rownum rn,t1.ron from (
+  select distinct p_num ,t.p_remark,t.p_name,t.p_issued_name,t.p_issued_time,t.p_state,
+    t.u_id,t.li_name,t.p_strcode,t.p_endcode,rownum ron
+ 	from v_ed_etask t where u_id=#{u_id})t1)t2
+ 	where t2.ron=#{p_id}
+  </select>
+  
+  
+  <select id="getEDETaskCount" parameterType="FuzzyMyworkParams" resultType="int">
+	select count(*) from (select distinct p_num ,t.p_remark,t.p_name,t.p_issued_name,t.p_issued_time,t.p_state,
+  	t.u_id,t.li_name,t.p_strcode,t.p_endcode,rownum rn
+ 	from v_ed_etask t where u_id=#{u_id} 	
+ 	<if test="p_name!='' and p_name!=null">
+			and p_name like '%${p_name}%'
+		</if>)
+  </select>
+  <select id="getEDTaskCount" parameterType="FuzzyMyworkParams" resultType="int">
+	select count(*) from (select distinct p_num ,t.p_remark,t.p_name,t.p_issued_name,t.p_issued_time,t.p_state,
+  	t.u_id,t.li_name,t.p_strcode,t.p_endcode,rownum rn
+ 	from v_ED_TASK t where u_id=#{u_id} and t.p_state in (2,3)
+ 	<if test="p_name!='' and p_name!=null">
+			and p_name like '%${p_name}%'
+		</if>
+ 	)
+  </select>
+  <select id="getOneEDTask" parameterType="FuzzyMyworkParams" resultType="MyTaskPojo">
+  	 select  p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,t2.ron p_id from
+ (select p_num ,p_remark,p_name,p_issued_name,p_issued_time,p_state,u_id,li_name,p_strcode,p_endcode,rownum rn,t1.ron from (
+  select distinct p_num ,t.p_remark,t.p_name,t.p_issued_name,t.p_issued_time,t.p_state,
+    t.u_id,t.li_name,t.p_strcode,t.p_endcode,rownum ron
+ 	from v_ED_TASK t where u_id=#{u_id})t1)t2
+ 	where t2.ron=#{p_id}
+  </select>
+  
+</mapper>

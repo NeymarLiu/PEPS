@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zrgk.mapper.FlawMapper">
+<resultMap type="flawPojo" id="flaw">
+	<id column="f_id" property="f_id"/>
+	<result column="f_name" property="f_name"/>
+	<result column="f_state" property="f_state"/>
+	<result column="f_described" property="f_described"/>
+</resultMap>
+	<!-- 得到类型信息 -->
+	<select id="getAllFlawPojo"   parameterType="FuzzyPoleParams" resultType="FlawPojo">
+	select t1.* from (select t.*,rownum rn  from (select * from flaw where f_state!=2 
+		 <if test="f_name !='' and f_name !=null">
+					and f_name like '%${f_name}%'
+		</if>
+		order by f_id
+		)t )t1
+		where t1.rn between #{startNumber} and #{endNumber}
+	</select>
+	<select id="getAllFlawPojoCount"   parameterType="FuzzyPoleParams"  resultType="int">
+		select count(*) from flaw where f_state!=2 
+		 <if test="f_name !='' and f_name !=null">
+					and f_name like '%${f_name}%'
+		</if>
+	</select>
+	<select id="checkFName" parameterType="flawPojo" resultType="string">
+		select count(*) from flaw where f_name=#{f_name} and f_state!=2
+		<if test="f_id!=null and f_id !=''">
+		 and f_id!=#{f_id}
+		</if>
+	</select>
+	<select id="toUpdateFlawPojo" parameterType="int" resultType="flawPojo">
+		select * from flaw where f_id=#{f_id}
+	</select>
+	
+	<insert id="addFlawPojo" parameterType="FlawPojo">
+	<selectKey keyProperty="f_id" resultType="int" order="BEFORE">
+		select flaw_seq.nextval from dual
+		</selectKey>
+	insert into flaw (f_id,f_name,f_state)values(#{f_id},#{f_name},#{f_state})
+	</insert>
+	<update id="UpdateFlawPojo" parameterType="flawPojo">
+		<if test="f_described==null">
+			update flaw set f_name=#{f_name},f_state=#{f_state} where f_id=#{f_id}
+		</if>
+		<if test="f_described!=null">
+			update flaw set f_name=#{f_name},f_state=#{f_state},f_described=#{f_described})
+			where f_id=#{f_id}
+		</if>
+	</update>
+	<update id="UpdateFlawPojo2" parameterType="flawPojo">
+	
+			update flaw set f_state=#{f_state} where f_id=#{f_id}
+		
+	</update>
+</mapper>

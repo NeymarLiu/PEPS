@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zrgk.mapper.FlawLevelMapper" >
+	<select id="getAllPatrolFlawPojo" parameterType="FlawSureParams" resultType="PatrolQueryPojo">
+		select * from (select t.*,rownum rn from (
+		select * from v_sure_patrol where pf_sure_grade is null
+		<if test="p_num!=null and p_num !=''">
+			and p_num like '%${p_num}%'
+		</if>
+		<if test="li_code!=null and li_code !=''">
+			and li_code like '%${li_code}%'
+		</if>
+		order by p_id)t)t1
+		where t1.rn between #{startNumber} and #{endNumber}
+	</select>
+	<select id="getAllPatrolFlawPojoCount" parameterType="FlawSureParams" resultType="int">
+		select count(*) from v_sure_patrol where  pf_sure_grade is null
+		<if test="p_num!=null and p_num !=''">
+			and p_num like '%${p_num}%'
+		</if>
+		<if test="li_code!=null and li_code !=''">
+			and li_code like '%${li_code}%'
+		</if>
+	</select>
+		
+		
+	<update id="sureFlaw" parameterType="PatrolFlawPojo">
+		update patrol_flaw set pf_sure_grade=#{pf_sure_grade} where pf_id=#{pf_id}
+	</update>
+	<select id="getUnSureCount" parameterType="int" resultType="int">
+		select count(*) from patrol_flaw where p_id=#{p_id} and pf_sure_grade is null
+	</select>
+</mapper>

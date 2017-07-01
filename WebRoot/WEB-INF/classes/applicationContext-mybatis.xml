@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd"
+	>
+	<!--配置连接数据库 对象 -->
+	<bean id="basicDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+
+		<property name="url" value="jdbc:oracle:thin:@169.254.118.135:1521:orcl"/>
+		<!-- <property name="url" value="jdbc:oracle:thin:@127.0.0.1:1521:orcl"/>--> 
+
+		<property name="username" value="peps"/>
+		<property name="password" value="oracle"/>
+		<property name="maxActive" value="100"/>
+		<property name="maxIdle" value="30"/>
+		<property name="maxWait" value="10"/>
+	</bean>
+	
+	<!-- 配置sqlSessionFactory 对象   加载链接数据库 -->
+	<!-- 使用spring整合mybatis
+	
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" >
+		数据库连接参数
+		<property name="dataSource" ref="basicDataSource"/>
+		取别名
+		<property name="typeAliasesPackage" value="com.zrgk.pojo"/>
+	</bean> -->
+	
+	<!-- 通过加载mybatis配置文件的方式得到sqlsessionfactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" >
+		<!-- 加载mybatis的 配置文件  目的是为了加载  mapper文件 -->
+		<property name="configLocation" value="classpath:SqlmapConfig.xml"></property>
+		<!-- 数据库的链接参数 -->
+		<property name="dataSource" ref="basicDataSource"></property>
+	</bean>
+	
+	<!-- 配置扫描 mapper映射文件    lazyinit=false延迟加载-->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.zrgk.mapper"/>
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+</beans>

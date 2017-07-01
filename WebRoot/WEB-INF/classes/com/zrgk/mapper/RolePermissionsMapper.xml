@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zrgk.mapper.RolePermissionsMapper">
+	<insert id="toRoleSomePermissions" parameterType="RolePermissionsPojo">
+	insert into role_menu values(#{r_id},#{m_id})		
+	</insert>
+	<delete id="deleteRoleMenu" parameterType="int">
+		delete from role_menu where r_id=#{rid} 
+	</delete>
+	<select id="getRoleMenuById" parameterType="int" resultType="int">
+		select m_id from role_menu where r_id=#{rid}
+	</select>
+</mapper>

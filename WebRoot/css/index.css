@@ -1,0 +1,42 @@
+@charset "utf-8";
+/* CSS Document */
+/*content
+#content{width:100%; min-width:1300px; background:url(../images/content_bg.png) no-repeat center; height:694px;}
+.content{width:1200px; margin:0px auto;}*/
+.time{margin:0px auto; width:434px; height:67px; padding-top:0px; font-family:"黑体";}
+.time span{background:url(../images/time_bg.png) no-repeat; width:56px; height:95px;float:left; display:block; text-align:center; font-size:72px; margin-top:0px;}
+.time strong{float:left; display:inline; width:40px; text-align:center; height:95px; line-height:80px; font-size:72px;}
+.date{text-align:center ;margin:0px auto; margin-top:10px; color:white; font-size:18px; height:30px; line-height:25px;display:block;}
+.welcome_wz{width:400px; height:112px; margin:0px auto; margin-top:30px;}
+/*
+.switch{background:url(../images/Switch_bg.png) no-repeat; width:157px; height:22px; margin:0px auto;}
+.switch ul li{float:left; margin-left:26px; display:inline; margin-top:3px;}
+.switch_tab1{background:url(../images/switch_tab.png) no-repeat; width:16px; height:17px;}
+.switch_tab2{background:url(../images/switch_tab.png) no-repeat -44px 0px; width:16px; height:17px;}*/
+.first_screen{height:20px;}
+.weather{
+	position: absolute;
+	background: url(../images/weather_bg.png) no-repeat;
+	width: 251px;
+	height:150px;
+	right:0px;
+	top:10px;
+}
+.today{margin:5px 5px 10px 5px;}
+.today img{float:left;}
+.today span{ margin-left:15px; width:80px; height:60px; font-size:30px; font-family:"黑体"; color:#fff; line-height:60px;}
+.city a{height:25px; width:54px; margin-left:10px; color:#fff; font-size:14px; font-weight:bold; float:left; padding-left:10px; line-height:25px;}
+.city a:hover{background:url(../images/city_bg.png) no-repeat; height:25px; width:54px;}
+.refresh{margin-top:1px; background:url(../images/line.jpg) no-repeat top center; padding:10px 8px 0px 8px;}
+.refresh span,.refresh a{color:#fff;}
+/*第二屏*/
+.second_screen ul li{float:left; display:inline; width:90px; height:90px; margin:25px 30px 10px 30px; text-align:center; overflow:hidden;}
+.second_screen ul li a{color:#fff;}
+.second_screen ul li p{line-height:30px; text-align:center;}
+.second_screen ul li a span{width:90px; height:64px; text-align:center; overflow:hidden;}
+.second_screen ul li span{width:90px; height:64px; text-align:center;vertical-align:middle;display: table-cell;vertical-align:middle;}
+.second_screen span img, .second_screen a img{max-width:90px;width:expression_r(this.width>90?"90px":this.width);vertical-align:middle;max-height:64px;height:expression_r(this.height>64?"64px":this.height);}
+
+.main_desktop{background:url(../images/main_desktop.png) no-repeat center bottom; width:635px; height:180px; margin:0px auto; padding:0px 70px; margin-top:40px;}
+.desktop_wrap li{float:left; display:inline; width:64px; text-align:center; margin-left:52px; overflow:hidden;}
+.desktop_wrap li p{color:#fff; height:40px; line-height:40px; font-family:"\5FAE\8F6F\96C5\9ED1"; font-size:15px; font-weight:bold;}
